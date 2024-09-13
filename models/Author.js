@@ -24,7 +24,16 @@ const Authorschema = new mongoose.Schema(
             minlength: 2,
             maxlength: 100,
         },
-        image: { type: String, default: "default-image.png" },
+        image: { type: String, default: "default-image.png" 
+
+        },
+        description: {
+            type: String,
+            trim: true,
+            minlength: 5,
+            default:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+
+        },
     },
     { timeStamps: true }
 );
@@ -37,6 +46,7 @@ function validateAuthor(obj) {
         lastName: Joi.string().trim().min(3).max(200).required(),
         nationality: Joi.string().trim().min(2).max(100).required(),
         image: Joi.string(),
+        description: Joi.string().trim().min(5)
     });
 
     return schema.validate(obj);
@@ -48,6 +58,7 @@ function validateUpdateAuthor(obj) {
         lastName: Joi.string().trim().min(3).max(30),
         nationality: Joi.string().trim().min(2).max(100),
         image: Joi.string(),
+        description: Joi.string().trim().min(5)
     });
 
     return schema.validate(obj);

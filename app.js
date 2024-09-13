@@ -3,7 +3,7 @@ require('dotenv').config();
 const cors = require('cors');
 const connectToDb = require('./config/db');
 const path = require('path');
-
+const serverless=require('serverless-http')
 // Connect to the database
 connectToDb();
 
@@ -25,6 +25,7 @@ app.use('/api/categories', require('./routers/categories'));
 app.use('/api/auth', require('./routers/auth'));
 app.use('/api/upload', require('./routers/upload')); 
 app.use('/api/status', require('./routers/UserBookStatus')); 
+app.use('/api/reviews', require('./routers/reviews')); 
 
 // Error handling middleware (optional but recommended)
 app.use((err, req, res, next) => {
@@ -35,3 +36,4 @@ app.use((err, req, res, next) => {
 // Start the server
 const Port = process.env.PORT || 3000;
 app.listen(Port, () => console.log(`Server Running in ${process.env.NODE_ENV} mode on port ${Port}`));
+module.exports.handler=serverless(app);

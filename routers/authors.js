@@ -56,6 +56,7 @@ router.post("/", asyncHandler(async (req, res) => {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         nationality: req.body.nationality,
+        description: req.body.description,
         image: req.body.image,
     })
     const result = await author.save();
@@ -79,6 +80,7 @@ router.put("/:id", asyncHandler(async (req, res) => {
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             nationality: req.body.nationality,
+            description: req.body.description,
             image: req.body.image,
         }
     },

@@ -1,72 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const UserBookStatus = require('../models/UserBookStatus');
+const {UserBookStatus,validateStatus,validateUpdateStatus}= require('../models/UserBookStatus');
 const asyncHandler = require('express-async-handler'); 
 const Book = require('../models/Book');
-const jwt = require('jsonwebtoken');
+const mongoose = require("mongoose");
 const User = require('../models/User'); 
 
 
-const authenticate = async (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; 
-
-    if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-
-    try {
-        
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); 
-        const user = await User.findById(decoded.id);
-
-        if (!user) {
-            return res.status(401).json({ message: 'User not found' });
-        }
-
-        req.user = user; 
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Invalid token' });
-    }
-};
-
-/**
- * @desc: Create or update user-book status
- * @route /api/status
- * @method POST
- * @access public
- */
-router.post(
-    '/',
+router.get(
+    "/",
     asyncHandler(async (req, res) => {
-        const { user, book, status } = req.body;
+        const { pageNumber } = req.query;
+        const statusPerPage = 5;
+         statusList = await UserBookStatus.find().skip((pageNumber - 1) * statusPerPage)
+        .limit(statusPerPage);
+    res.status(200).json(statusList);
+}
+));
 
-        
-        if (!['Read', 'Reading', 'Want to read', 'none'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status value' });
-        }
-
-        // Check if the status already exists for this user and book
-        let userBookStatus = await UserBookStatus.findOne({ user, book });
-
-        if (userBookStatus) {
-            // If it exists, update it
-            userBookStatus.status = status;
-            await userBookStatus.save();
-            return res.status(200).json(userBookStatus);
-        }
-
-        // If it does not exist, create a new one
-        userBookStatus = new UserBookStatus({
-            user,
-            book,
-            status,
-        });
-
-        const result = await userBookStatus.save();
-        res.status(201).json(result);
-    })
-);
 
 /**
  * @desc: Update user-book status
@@ -77,57 +28,70 @@ router.post(
 router.put(
     '/:id',
     asyncHandler(async (req, res) => {
-        const { status } = req.body;
-
-        // Validation (e.g., checking if `status` is valid)
-        if (!['Read', 'Reading', 'Want to read', 'none'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status value' });
+        const { error } = validateUpdateStatus(req.body);
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
         }
-
         const updatedStatus = await UserBookStatus.findByIdAndUpdate(
             req.params.id,
-            { status }, // Only update status
-            { new: true, runValidators: true } // Return updated document and run validators
+            {
+                $set: {
+                    status: req.body.status,
+                },
+            },
+            { new: true }
         );
-
-        if (!updatedStatus) {
-            return res.status(404).json({ message: 'UserBookStatus not found' });
-        }
 
         res.status(200).json(updatedStatus);
     })
 );
 
 
-// @desc: Get all books with user status
-// @route: GET /api/books/status
-// @access: Private
-router.get(
-    '/status',
-    authenticate, // Apply the authentication middleware
+router.post(
+    "/",
     asyncHandler(async (req, res) => {
-        const userId = req.user._id; // Extract user ID from authenticated request
+        const { error } = validateStatus(req.body);
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
 
-        // Fetch user book statuses
-        const userBookStatuses = await UserBookStatus.find({ user: userId });
+        const userbook= new UserBookStatus({
+            book: req.body.book,
+            user: req.body.user,
+            status: req.body.status,
+        });
 
-        // Extract book IDs and statuses
-        const bookStatusMap = userBookStatuses.reduce((acc, { book, status }) => {
-            acc[book] = status;
-            return acc;
-        }, {});
-
-        // Fetch books
-        const books = await Book.find({ _id: { $in: Object.keys(bookStatusMap) } });
-
-        // Attach status to books
-        const booksWithStatus = books.map(book => ({
-            ...book.toObject(),
-            status: bookStatusMap[book._id.toString()] || 'none'
-        }));
-
-        res.status(200).json(booksWithStatus);
+        const result = await userbook.save();
+        res.status(201).json(result);
     })
 );
 
+
+
+/**
+ * @desc: Get all book statuses for a specific user
+ * @route /api/status/user/:userId
+ * @method GET
+ * @access public
+ */
+router.get(
+    '/user/:userId',
+    asyncHandler(async (req, res) => {
+        const { userId } = req.params;
+
+        // Validate userId (assuming it's a valid ObjectId)
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+
+        // Fetch statuses for the given user
+        const userStatuses = await UserBookStatus.find({ user: userId });
+
+        if (!userStatuses.length) {
+            return res.status(404).json({ message: 'No statuses found for this user' });
+        }
+
+        res.status(200).json(userStatuses);
+    })
+);
 module.exports = router;

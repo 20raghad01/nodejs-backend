@@ -66,8 +66,6 @@ router.post(
             title: req.body.title,
             author: req.body.author,
             description: req.body.description,
-            price: req.body.price,
-            rating: req.body.rating,
             Category: req.body.category,
             image: req.body.image,
             reviews: req.body.reviews
@@ -98,8 +96,6 @@ router.put(
                     title: req.body.title,
                     author: req.body.author,
                     description: req.body.description,
-                    price: req.body.price,
-                    rating: req.body.rating,
                     Category: req.body.category,
                     image: req.body.image,
                     reviews: req.body.reviews

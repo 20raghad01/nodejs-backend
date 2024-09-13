@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Joi = require('joi');
 
 const userBookStatusSchema = new mongoose.Schema({
     user: {
@@ -13,11 +14,31 @@ const userBookStatusSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['reading', 'finished', 'want-to-read', 'none'],
-        default: 'none',
+        enum: ['Read', 'Reading', 'Want to read'],
+        required: true,
     },
 }, { timestamps: true });
 
 const UserBookStatus = mongoose.model('UserBookStatus', userBookStatusSchema);
+function validateStatus(obj) {
+    const schema = Joi.object({
+        user:Joi.string().required(),
+        book:Joi.string().required(),
+        status:Joi.string().required(),
 
-module.exports = UserBookStatus;
+    });
+
+    return schema.validate(obj);
+}
+//validate status
+function validateUpdateStatus(obj) {
+    const schema = Joi.object({
+        user:Joi.string().required(),
+        book:Joi.string().required(),
+        status:Joi.string().required(),
+    });
+
+    return schema.validate(obj);
+}
+
+module.exports = {UserBookStatus,validateStatus,validateUpdateStatus};

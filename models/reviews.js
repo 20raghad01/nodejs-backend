@@ -1,6 +1,6 @@
 const express = require("express");
+const Joi = require("joi");
 const router = express.Router();
-const { reviews } = require("../models/reviews");
 
 
 const mongoose = require('mongoose');
@@ -32,11 +32,33 @@ const reviewSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-const Review = mongoose.model('Review', reviewSchema);
-module.exports = Review;
+function validateReview(obj) {
+    const schema = Joi.object({
+        user:Joi.string().required(),
+        book:Joi.string().required(),
+        title:Joi.string(),
+        content:Joi.string(),
+        rating:Joi.number(),
+
+    });
+
+    return schema.validate(obj);
+}
+//validate status
+function validateUpdateReview(obj) {
+    const schema = Joi.object({
+        user:Joi.string().required(),
+        book:Joi.string().required(),
+        title:Joi.string(),
+        content:Joi.string(),
+        rating:Joi.number(),
+    });
+
+    return schema.validate(obj);
+}
 
 
-const reviews = mongoose.model("reviews", reviewsSchema);
+const reviews = mongoose.model("reviews", reviewSchema);
 module.exports = {
-    reviews
+    reviews,validateUpdateReview,validateReview
 }
